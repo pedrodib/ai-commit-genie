@@ -5,17 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/googleai"
 )
 
 func NewGemini(prompt string) string {
-	// Load the .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 
 	// Get the Gemini API key
 	geminiApiKey := os.Getenv("GEMINI_API_KEY")
