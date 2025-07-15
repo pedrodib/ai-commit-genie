@@ -20,7 +20,6 @@ func Load() {
 	// godotenv.Load will load the .env file from the specified path.
 	// If the file does not exist, it returns an error, which we treat as a warning.
 	if err := godotenv.Load(configPath); err != nil {
-		log.Printf("Error: config file not found in %s. Using system environment variables, if available. Error: %v", configPath, err)
-		os.Exit(1)
+		log.Fatalf("Error: config file not found in %s. Error: %v", configPath, err)
 	}
 }
