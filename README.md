@@ -1,6 +1,14 @@
 # AI Commit Genie 🧞
 
-**Version:** 0.3 (beta)
+[![Go Version](https://img.shields.io/badge/Go-1.20+-00ADD8?style=for-the-badge&logo=go)](https://golang.org)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-0.3%20(beta)-orange?style=for-the-badge)](https://github.com/pedrodib/ai-commit-genie/releases)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey?style=for-the-badge)](https://github.com/pedrodib/ai-commit-genie)
+
+[![AI Providers](https://img.shields.io/badge/AI%20Providers-Gemini%20%7C%20OpenAI%20%7C%20Anthropic-purple?style=flat-square&logo=openai)](https://github.com/pedrodib/ai-commit-genie)
+[![Languages](https://img.shields.io/badge/Languages-8%20Supported-green?style=flat-square&logo=googletranslate)](https://github.com/pedrodib/ai-commit-genie)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-pink?style=flat-square&logo=conventionalcommits)](https://conventionalcommits.org)
+[![Made with ❤️](https://img.shields.io/badge/Made%20with-❤️-red?style=flat-square)](https://github.com/pedrodib)
 
 AI Commit Genie is a command-line tool that uses the power of AI (Google Gemini, OpenAI, or Anthropic) to automatically generate clear, descriptive, and conventional commit messages from your staged git changes.
 
