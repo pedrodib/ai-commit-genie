@@ -28,20 +28,44 @@ func determineLanguage(langFlag string) string {
 			fmt.Printf("Warning: Unsupported language code '%s'. Using configured language.\n", langFlag)
 		}
 	}
-	
+
 	// Get language from environment variable
 	lang := os.Getenv("AI_COMMIT_LANG")
 	if lang == "" {
 		lang = "en" // Default to English
 	}
-	
+
 	// Validate the language exists in supported languages
 	if _, exists := ai.GetSupportedLanguages()[lang]; !exists {
 		fmt.Printf("Warning: Configured language '%s' is not supported. Using English.\n", lang)
 		return "en"
 	}
-	
+
 	return lang
+}
+
+func determineLLMProvider(llmFlag string) string {
+	if llmFlag != "" {
+		if _, exists := ai.GetSupportedLLMs()[llmFlag]; exists {
+			return llmFlag
+		} else {
+			fmt.Printf("Warning: Unsupported LLM provider '%s'. Using configured LLM.\n", llmFlag)
+		}
+	}
+
+	// Get llm from environment variable
+	llm := os.Getenv("AI_COMMIT_PREFERRED_LLM_PROVIDER")
+	if llm == "" {
+		llm = ai.GetDefaultProvider() // Default to Gemini
+	}
+
+	// Validate the LLM exists in supported llmProviders
+	if _, exists := ai.GetSupportedLLMs()[llm]; !exists {
+		fmt.Printf("Warning: Configured LLM '%s' is not supported. Using OpenAI.\n", llm)
+		return ai.GetDefaultProvider()
+	}
+
+	return llm
 }
 
 // askForConfirmation prompts the user with a question and waits for a y/n response.
@@ -69,12 +93,14 @@ func askForConfirmation(question string, reader io.Reader) bool {
 func main() {
 	// Parse command line flags
 	var langFlag string
+	var llmFlag string
 	var listLangs bool
-	
+
+	flag.StringVar(&llmFlag, "llm-provider", "", "LLM Provider for commit message (e.g., gemini, openai)")
 	flag.StringVar(&langFlag, "lang", "", "Language for commit message (e.g., en, pt, es)")
 	flag.BoolVar(&listLangs, "list-languages", false, "List all supported languages")
 	flag.Parse()
-	
+
 	// If user requested to list languages
 	if listLangs {
 		fmt.Println("Supported languages:")
@@ -83,12 +109,13 @@ func main() {
 		}
 		return
 	}
-	
+
 	config.Load()
 
 	// Determine the language to use (centralized logic)
 	lang := determineLanguage(langFlag)
-	
+	llmProvider := determineLLMProvider(llmFlag)
+
 	// Get language name for display
 	langName := ai.GetSupportedLanguages()[lang]
 
@@ -109,10 +136,10 @@ func main() {
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Suffix = fmt.Sprintf(" Generating commit message in %s...", langName)
+	s.Suffix = fmt.Sprintf(" Generating commit message in %s using %s...", langName, llmProvider)
 	s.Start()
 
-	commitMsg := ai.GenerateCommitMessage(diff, lang)
+	commitMsg := ai.GenerateCommitMessage(diff, lang, llmProvider)
 
 	s.Stop()
 

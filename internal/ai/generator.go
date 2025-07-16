@@ -21,7 +21,18 @@ func GetSupportedLanguages() map[string]string {
 	return languageNames
 }
 
-func GenerateCommitMessage(diff string, langCode string) string {
+func GetLLMProvider(llmProvider string) LLMStrategy {
+
+	// Check if the requested LLM provider is supported
+	if _, exists := supportedLLMs[llmProvider]; exists {
+		return supportedLLMs[llmProvider]
+	}
+
+	// If not supported, default to OpenAI
+	return supportedLLMs[GetDefaultProvider()]
+}
+
+func GenerateCommitMessage(diff string, langCode string, llmProvider string) string {
 	// Get the language name, default to English if not found
 	langName, exists := languageNames[langCode]
 	if !exists {
@@ -59,10 +70,13 @@ func GenerateCommitMessage(diff string, langCode string) string {
 
 	Generate the commit message entirely in ${langName}:`
 
+	// Getting provider Strategy based on llmProvider
+	provider := GetLLMProvider(llmProvider)
+
 	// Replace the diff and language name in the prompt
 	prompt = strings.ReplaceAll(prompt, "{diff}", diff)
 	prompt = strings.ReplaceAll(prompt, "${langName}", langName)
 
 	// Generate the answer
-	return NewGemini(prompt)
+	return provider(prompt)
 }

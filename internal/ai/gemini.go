@@ -9,7 +9,11 @@ import (
 	"github.com/tmc/langchaingo/llms/googleai"
 )
 
-func NewGemini(prompt string) string {
+func init() {
+	RegisterLLM("gemini", GenerateWithGemini)
+}
+
+func GenerateWithGemini(prompt string) string {
 
 	// Get the Gemini API key
 	geminiApiKey := os.Getenv("GEMINI_API_KEY")
