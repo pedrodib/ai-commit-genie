@@ -32,6 +32,31 @@ func GetLLMProvider(llmProvider string) LLMStrategy {
 	return supportedLLMs[GetDefaultProvider()]
 }
 
+// sanitizeCommitMessage removes markdown formatting and other unwanted characters from AI response
+func sanitizeCommitMessage(message string) string {
+	// Remove markdown code blocks (```)
+	message = strings.ReplaceAll(message, "```", "")
+
+	// Remove markdown inline code backticks
+	message = strings.ReplaceAll(message, "`", "")
+
+	// Remove extra quotes that might break git commit
+	message = strings.ReplaceAll(message, "\"\"\"", "")
+	message = strings.ReplaceAll(message, "'''", "")
+
+	// Trim whitespace and newlines from start and end
+	message = strings.TrimSpace(message)
+
+	// Remove any leading/trailing quotes if they wrap the entire message
+	if (strings.HasPrefix(message, "\"") && strings.HasSuffix(message, "\"")) ||
+		(strings.HasPrefix(message, "'") && strings.HasSuffix(message, "'")) {
+		message = message[1 : len(message)-1]
+		message = strings.TrimSpace(message)
+	}
+
+	return message
+}
+
 func GenerateCommitMessage(diff string, langCode string, llmProvider string) string {
 	// Get the language name, default to English if not found
 	langName, exists := languageNames[langCode]
@@ -62,7 +87,10 @@ func GenerateCommitMessage(diff string, langCode string, llmProvider string) str
 	- Optionally adds a more detailed description separated by a blank line
 	- Clearly describes what has been changed or fixed
 
-	IMPORTANT: You must write the entire commit message in ${langName}. Do not use English if the requested language is different.
+	IMPORTANT: 
+	- You must write the entire commit message in ${langName}. Do not use English if the requested language is different.
+	- Return ONLY the commit message text, without any markdown formatting, code blocks, or extra quotes.
+	- Do not wrap the response in backticks, quotes, or any other formatting characters.
 
 	Here is the code diff:
 
@@ -77,6 +105,7 @@ func GenerateCommitMessage(diff string, langCode string, llmProvider string) str
 	prompt = strings.ReplaceAll(prompt, "{diff}", diff)
 	prompt = strings.ReplaceAll(prompt, "${langName}", langName)
 
-	// Generate the answer
-	return provider(prompt)
+	// Generate the answer and sanitize it
+	rawMessage := provider(prompt)
+	return sanitizeCommitMessage(rawMessage)
 }
