@@ -90,6 +90,26 @@ func askForConfirmation(question string, reader io.Reader) bool {
 	}
 }
 
+// validateInput sanitizes and validates user input to prevent injection attacks
+func validateInput(input string) string {
+	// Remove null bytes and control characters
+	input = strings.ReplaceAll(input, "\x00", "")
+
+	// Remove potentially dangerous characters
+	dangerousChars := []string{";", "&", "|", "`", "$", "(", ")", "<", ">", "\\", "\"", "'"}
+	for _, char := range dangerousChars {
+		input = strings.ReplaceAll(input, char, "")
+	}
+
+	// Trim whitespace and limit length
+	input = strings.TrimSpace(input)
+	if len(input) > 50 { // Reasonable limit for language/provider codes
+		input = input[:50]
+	}
+
+	return input
+}
+
 func main() {
 	// Parse command line flags
 	var langFlag string
@@ -100,6 +120,10 @@ func main() {
 	flag.StringVar(&langFlag, "lang", "", "Language for commit message (e.g., en, pt, es)")
 	flag.BoolVar(&listLangs, "list-languages", false, "List all supported languages")
 	flag.Parse()
+
+	// Sanitize input parameters
+	langFlag = validateInput(langFlag)
+	llmFlag = validateInput(llmFlag)
 
 	// If user requested to list languages
 	if listLangs {

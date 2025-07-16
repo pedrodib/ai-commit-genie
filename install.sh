@@ -44,27 +44,79 @@ case $LLM_CHOICE in
         ;;
 esac
 
+# Function to validate API key format
+validate_api_key() {
+    local key="$1"
+    local provider="$2"
+    
+    # Remove any whitespace
+    key=$(echo "$key" | tr -d '[:space:]')
+    
+    # Check if key is empty
+    if [ -z "$key" ]; then
+        return 1
+    fi
+    
+    # Check for dangerous characters that could be used for injection
+    if [[ "$key" =~ [;\&\|\`\$\(\)\<\>\\] ]]; then
+        echo -e "${RED}Error: API key contains invalid characters.${NC}"
+        return 1
+    fi
+    
+    # Basic length validation (API keys are typically long)
+    if [ ${#key} -lt 10 ]; then
+        echo -e "${RED}Error: API key seems too short. Please check your key.${NC}"
+        return 1
+    fi
+    
+    # Provider-specific validation
+    case "$provider" in
+        "openai")
+            if [[ ! "$key" =~ ^sk- ]]; then
+                echo -e "${YELLOW}Warning: OpenAI API keys typically start with 'sk-'. Please verify your key.${NC}"
+            fi
+            ;;
+        "anthropic")
+            if [[ ! "$key" =~ ^sk- ]]; then
+                echo -e "${YELLOW}Warning: Anthropic API keys typically start with 'sk-'. Please verify your key.${NC}"
+            fi
+            ;;
+        "gemini")
+            # Gemini keys have different format, just check basic structure
+            if [ ${#key} -lt 20 ]; then
+                echo -e "${YELLOW}Warning: Gemini API keys are typically longer. Please verify your key.${NC}"
+            fi
+            ;;
+    esac
+    
+    return 0
+}
+
 # Step 3: Ask for API Key based on selected provider
 echo -e "\n--- API Key Configuration ---"
 if [ "$LLM_PROVIDER" = "openai" ]; then
     echo "You selected OpenAI. You'll need an OpenAI API key."
     echo "Get your API key from: https://platform.openai.com/api-keys"
-    read -p "Please enter your OPENAI_API_KEY: " API_KEY
+    read -s -p "Please enter your OPENAI_API_KEY: " API_KEY
+    echo  # New line after hidden input
     API_KEY_VAR="OPENAI_API_KEY"
 elif [ "$LLM_PROVIDER" = "anthropic" ]; then
     echo "You selected Anthropic. You'll need an Anthropic API key."
     echo "Get your API key from: https://console.anthropic.com/settings/keys"
-    read -p "Please enter your ANTHROPIC_API_KEY: " API_KEY
+    read -s -p "Please enter your ANTHROPIC_API_KEY: " API_KEY
+    echo  # New line after hidden input
     API_KEY_VAR="ANTHROPIC_API_KEY"
 else
     echo "You selected Gemini. You'll need a Gemini API key."
     echo "Get your API key from: https://aistudio.google.com/app/apikey"
-    read -p "Please enter your GEMINI_API_KEY: " API_KEY
+    read -s -p "Please enter your GEMINI_API_KEY: " API_KEY
+    echo  # New line after hidden input
     API_KEY_VAR="GEMINI_API_KEY"
 fi
 
-if [ -z "$API_KEY" ]; then
-    echo -e "${RED}API Key cannot be empty. Aborting installation.${NC}"
+# Validate the API key
+if ! validate_api_key "$API_KEY" "$LLM_PROVIDER"; then
+    echo -e "${RED}API Key validation failed. Aborting installation.${NC}"
     exit 1
 fi
 
