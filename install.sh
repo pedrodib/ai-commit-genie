@@ -27,12 +27,63 @@ if [ -z "$API_KEY" ]; then
     exit 1
 fi
 
-# Step 3: Create the configuration directory and file
+# Step 3: Ask for language preference
+echo -e "\n--- Language Configuration ---"
+echo "Please select your preferred language for commit messages:"
+echo "1) English"
+echo "2) Português"
+echo "3) Español"
+echo "4) Français"
+echo "5) Deutsch"
+echo "6) 中文"
+echo "7) 日本語"
+echo "8) Русский"
+
+# Default to English
+LANG_CODE="en"
+read -p "Enter your choice (1-8) [default: 1]: " LANG_CHOICE
+
+case $LANG_CHOICE in
+    2)
+        LANG_CODE="pt"
+        echo "Selected language: Português"
+        ;;
+    3)
+        LANG_CODE="es"
+        echo "Selected language: Español"
+        ;;
+    4)
+        LANG_CODE="fr"
+        echo "Selected language: Français"
+        ;;
+    5)
+        LANG_CODE="de"
+        echo "Selected language: Deutsch"
+        ;;
+    6)
+        LANG_CODE="zh"
+        echo "Selected language: 中文"
+        ;;
+    7)
+        LANG_CODE="ja"
+        echo "Selected language: 日本語"
+        ;;
+    8)
+        LANG_CODE="ru"
+        echo "Selected language: Русский"
+        ;;
+    *)
+        echo "Selected language: English (default)"
+        ;;
+esac
+
+# Step 4: Create the configuration directory and file
 echo "Creating configuration file..."
 CONFIG_DIR="$HOME/.config/git-ai-commit-genie"
 mkdir -p "$CONFIG_DIR"
 echo "GEMINI_API_KEY=${API_KEY}" > "$CONFIG_DIR/.env"
-echo -e "API Key saved to ${YELLOW}${CONFIG_DIR}/.env${NC}"
+echo "AI_COMMIT_LANG=${LANG_CODE}" >> "$CONFIG_DIR/.env"
+echo -e "Configuration saved to ${YELLOW}${CONFIG_DIR}/.env${NC}"
 
 # Step 4: Install the Go program
 echo -e "\nInstalling the 'git-ai-commit-genie' command..."

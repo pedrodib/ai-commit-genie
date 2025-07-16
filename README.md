@@ -79,6 +79,36 @@ The workflow is designed to be as simple as possible:
     ```
     Type `y` and press Enter to proceed. The commit will be made. If you type `n`, the commit will be canceled.
 
+### Language Support
+
+AI Commit Genie supports multiple languages for generating commit messages. You can:
+
+1. **Set your preferred language during installation**
+   The installation script will prompt you to select your preferred language, which will be saved as `AI_COMMIT_LANG` in your configuration file.
+
+2. **Specify a language for a single commit:**
+   ```bash
+   git ai-commit-genie --lang pt  # Generate commit message in Portuguese
+   ```
+
+3. **List all supported languages:**
+   ```bash
+   git ai-commit-genie --list-languages
+   ```
+
+4. **Manually edit your language preference:**
+   You can edit the `AI_COMMIT_LANG` variable in `~/.config/git-ai-commit-genie/.env`
+
+Currently supported languages:
+- English (en)
+- Português (pt)
+- Español (es)
+- Français (fr)
+- Deutsch (de)
+- 中文 (zh)
+- 日本語 (ja)
+- Русский (ru)
+
 ## Author
 
 -   **Pedro Dib**

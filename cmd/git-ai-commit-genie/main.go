@@ -5,6 +5,7 @@ import (
 	"ai-commit-genie/internal/config"
 	"ai-commit-genie/internal/git"
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +17,32 @@ import (
 )
 
 const maxDiffLength = 10000 // Limit diff size to 10k characters to avoid large and expensive API requests
+
+// determineLanguage centralizes the logic for determining the language to use
+func determineLanguage(langFlag string) string {
+	// Priority: command line flag > environment variable > default
+	if langFlag != "" {
+		if _, exists := ai.GetSupportedLanguages()[langFlag]; exists {
+			return langFlag
+		} else {
+			fmt.Printf("Warning: Unsupported language code '%s'. Using configured language.\n", langFlag)
+		}
+	}
+	
+	// Get language from environment variable
+	lang := os.Getenv("AI_COMMIT_LANG")
+	if lang == "" {
+		lang = "en" // Default to English
+	}
+	
+	// Validate the language exists in supported languages
+	if _, exists := ai.GetSupportedLanguages()[lang]; !exists {
+		fmt.Printf("Warning: Configured language '%s' is not supported. Using English.\n", lang)
+		return "en"
+	}
+	
+	return lang
+}
 
 // askForConfirmation prompts the user with a question and waits for a y/n response.
 // It reads from the provided io.Reader, making it testable.
@@ -40,7 +67,30 @@ func askForConfirmation(question string, reader io.Reader) bool {
 }
 
 func main() {
+	// Parse command line flags
+	var langFlag string
+	var listLangs bool
+	
+	flag.StringVar(&langFlag, "lang", "", "Language for commit message (e.g., en, pt, es)")
+	flag.BoolVar(&listLangs, "list-languages", false, "List all supported languages")
+	flag.Parse()
+	
+	// If user requested to list languages
+	if listLangs {
+		fmt.Println("Supported languages:")
+		for code, name := range ai.GetSupportedLanguages() {
+			fmt.Printf("  %s: %s\n", code, name)
+		}
+		return
+	}
+	
 	config.Load()
+
+	// Determine the language to use (centralized logic)
+	lang := determineLanguage(langFlag)
+	
+	// Get language name for display
+	langName := ai.GetSupportedLanguages()[lang]
 
 	diff, err := git.GetStagedDiff()
 	if err != nil {
@@ -59,10 +109,10 @@ func main() {
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Suffix = " Generating commit message..."
+	s.Suffix = fmt.Sprintf(" Generating commit message in %s...", langName)
 	s.Start()
 
-	commitMsg := ai.GenerateCommitMessage(diff)
+	commitMsg := ai.GenerateCommitMessage(diff, lang)
 
 	s.Stop()
 
