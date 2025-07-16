@@ -19,15 +19,56 @@ then
 fi
 echo "Go installation found."
 
-# Step 2: Ask for the API Key first
+# Step 2: Ask for LLM provider preference
+echo -e "\n--- LLM Provider Configuration ---"
+echo "Please select your preferred AI provider:"
+echo "1) Gemini (Google)"
+echo "2) OpenAI (ChatGPT)"
+echo "3) Anthropic (Claude)"
+
+# Default to Gemini
+LLM_PROVIDER="gemini"
+read -p "Enter your choice (1-3) [default: 1]: " LLM_CHOICE
+
+case $LLM_CHOICE in
+    2)
+        LLM_PROVIDER="openai"
+        echo "Selected provider: OpenAI"
+        ;;
+    3)
+        LLM_PROVIDER="anthropic"
+        echo "Selected provider: Anthropic"
+        ;;
+    *)
+        echo "Selected provider: Gemini (default)"
+        ;;
+esac
+
+# Step 3: Ask for API Key based on selected provider
 echo -e "\n--- API Key Configuration ---"
-read -p "Please enter your GEMINI_API_KEY: " API_KEY
+if [ "$LLM_PROVIDER" = "openai" ]; then
+    echo "You selected OpenAI. You'll need an OpenAI API key."
+    echo "Get your API key from: https://platform.openai.com/api-keys"
+    read -p "Please enter your OPENAI_API_KEY: " API_KEY
+    API_KEY_VAR="OPENAI_API_KEY"
+elif [ "$LLM_PROVIDER" = "anthropic" ]; then
+    echo "You selected Anthropic. You'll need an Anthropic API key."
+    echo "Get your API key from: https://console.anthropic.com/settings/keys"
+    read -p "Please enter your ANTHROPIC_API_KEY: " API_KEY
+    API_KEY_VAR="ANTHROPIC_API_KEY"
+else
+    echo "You selected Gemini. You'll need a Gemini API key."
+    echo "Get your API key from: https://aistudio.google.com/app/apikey"
+    read -p "Please enter your GEMINI_API_KEY: " API_KEY
+    API_KEY_VAR="GEMINI_API_KEY"
+fi
+
 if [ -z "$API_KEY" ]; then
     echo -e "${RED}API Key cannot be empty. Aborting installation.${NC}"
     exit 1
 fi
 
-# Step 3: Ask for language preference
+# Step 4: Ask for language preference
 echo -e "\n--- Language Configuration ---"
 echo "Please select your preferred language for commit messages:"
 echo "1) English"
@@ -77,15 +118,31 @@ case $LANG_CHOICE in
         ;;
 esac
 
-# Step 4: Create the configuration directory and file
+# Step 5: Create the configuration directory and file
 echo "Creating configuration file..."
 CONFIG_DIR="$HOME/.config/git-ai-commit-genie"
 mkdir -p "$CONFIG_DIR"
-echo "GEMINI_API_KEY=${API_KEY}" > "$CONFIG_DIR/.env"
+
+# Create .env file with appropriate API key and configuration
+if [ "$LLM_PROVIDER" = "openai" ]; then
+    echo "OPENAI_API_KEY=${API_KEY}" > "$CONFIG_DIR/.env"
+    echo "GEMINI_API_KEY=" >> "$CONFIG_DIR/.env"
+    echo "ANTHROPIC_API_KEY=" >> "$CONFIG_DIR/.env"
+elif [ "$LLM_PROVIDER" = "anthropic" ]; then
+    echo "ANTHROPIC_API_KEY=${API_KEY}" > "$CONFIG_DIR/.env"
+    echo "GEMINI_API_KEY=" >> "$CONFIG_DIR/.env"
+    echo "OPENAI_API_KEY=" >> "$CONFIG_DIR/.env"
+else
+    echo "GEMINI_API_KEY=${API_KEY}" > "$CONFIG_DIR/.env"
+    echo "OPENAI_API_KEY=" >> "$CONFIG_DIR/.env"
+    echo "ANTHROPIC_API_KEY=" >> "$CONFIG_DIR/.env"
+fi
+
 echo "AI_COMMIT_LANG=${LANG_CODE}" >> "$CONFIG_DIR/.env"
+echo "AI_COMMIT_PREFERRED_LLM_PROVIDER=${LLM_PROVIDER}" >> "$CONFIG_DIR/.env"
 echo -e "Configuration saved to ${YELLOW}${CONFIG_DIR}/.env${NC}"
 
-# Step 4: Install the Go program
+# Step 6: Install the Go program
 echo -e "\nInstalling the 'git-ai-commit-genie' command..."
 if ! go install ./cmd/git-ai-commit-genie; then
     echo -e "${RED}Installation failed. Please check the Go build errors above.${NC}"
@@ -94,7 +151,7 @@ fi
 INSTALL_DIR="$(go env GOPATH)/bin"
 echo -e "Command installed successfully to ${YELLOW}${INSTALL_DIR}${NC}"
 
-# Step 5: Validate the PATH
+# Step 7: Validate the PATH
 echo -e "\nValidating PATH..."
 if [[ ":$PATH:" != *":${INSTALL_DIR}:"* ]]; then
     echo -e "${YELLOW}IMPORTANT: Your PATH is not configured correctly.${NC}"
