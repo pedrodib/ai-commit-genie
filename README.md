@@ -14,6 +14,12 @@ AI Commit Genie is a command-line tool that uses the power of AI (Google Gemini,
 
 Stop writing `git commit -m "fix"` and let the genie do the work for you!
 
+## 🎬 Demo
+
+![AI Commit Genie Demo](example.gif)
+
+*See AI Commit Genie in action - from staged changes to perfect commit messages in seconds!*
+
 ## Description
 
 This tool integrates directly with your Git workflow. By running `git ai-commit-genie`, it:
